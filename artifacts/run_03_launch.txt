@@ -1,0 +1,6 @@
+Run 03 launch validation
+
+Command: python -m unittest tests.test_launch tests.test_camera_render
+Result: PASS
+
+Manual inspection: Board viewport rendering shows platform plate, bounds, and fading grid. Panning and stepped zoom are functional.

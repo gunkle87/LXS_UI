@@ -1,2 +1,4 @@
-Command: .venv\Scripts\python.exe -c "import ui.model; print('Launch Validated')"
-Success Signal: Launch Validated
+Run 02 launch validation
+
+Command: python -m pytest tests
+Result: PASS

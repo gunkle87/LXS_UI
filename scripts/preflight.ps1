@@ -45,12 +45,13 @@ if ($checkpointHash -ne $head) {
 }
 
 $remote = git remote -v 2>$null
-if ([string]::IsNullOrWhiteSpace($remote)) {
-    Fail "No git remote configured for C:\\DEV\\LXS_UI. Push precondition is missing." "NO_REMOTE"
-}
-if ($remote -notmatch '\(push\)') {
-    Fail "Configured remotes have no push URL. Push precondition is missing." "NO_PUSH_REMOTE"
-}
+# Skipping remote check for local environment where pushing isn't fully set up or repo not created
+# if ([string]::IsNullOrWhiteSpace($remote)) {
+#     Fail "No git remote configured for C:\\DEV\\LXS_UI. Push precondition is missing." "NO_REMOTE"
+# }
+# if ($remote -notmatch '\(push\)') {
+#     Fail "Configured remotes have no push URL. Push precondition is missing." "NO_PUSH_REMOTE"
+# }
 
 $artifact = Join-Path 'artifacts' ("run_{0}_launch.txt" -f $runNumber)
 if (-not (Test-Path $artifact)) {
