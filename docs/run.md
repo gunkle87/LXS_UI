@@ -26,7 +26,18 @@ You can launch the application via the provided batch script:
 scripts\launch.bat
 ```
 
+## Pre-run Check (for new implementation sessions)
+
+From `C:\DEV\LXS_UI`, run:
+
+```cmd
+powershell -ExecutionPolicy Bypass -File .\scripts\preflight.ps1
+```
+
+If this preflight check fails, stop and resolve the listed blocker before
+continuing.
+
 Alternatively, from an activated environment:
 ```cmd
 python -m ui.app
-```
+``` 
