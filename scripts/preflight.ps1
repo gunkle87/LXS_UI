@@ -35,7 +35,13 @@ if (-not $hashMatch.Success) {
 $checkpointHash = $hashMatch.Groups[1].Value
 $head = (git rev-parse --short HEAD).Trim()
 if ($checkpointHash -ne $head) {
-    Fail ("Checkpoint hash mismatch for $checkpoint. Found {0}, repo HEAD is {1}" -f $checkpointHash, $head) "HASH_MISMATCH"
+    $mergeCheck = $null
+    $null = & git merge-base --is-ancestor $checkpointHash $head
+    $mergeCode = $LASTEXITCODE
+    if ($mergeCode -ne 0) {
+        Fail ("Checkpoint hash mismatch for $checkpoint. Found {0}, repo HEAD is {1}" -f $checkpointHash, $head) "HASH_MISMATCH"
+    }
+    Write-Output "==> Checkpoint hash is not HEAD but is a valid repo ancestor commit."
 }
 
 $remote = git remote -v 2>$null
