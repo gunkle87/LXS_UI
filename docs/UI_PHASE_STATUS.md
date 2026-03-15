@@ -21,5 +21,5 @@
 ## Run Details
 
 - **Current Repo Launch Command:** `scripts\launch.bat`
-- **Current Known Blockers:** No git remote configured in `C:\DEV\LXS_UI` (push requirement pending)
+- **Current Known Blockers:** Latest run docs and artifacts are committed locally and have not yet been pushed.
 - **Current Deferred Items:** Board logic, engine bridge, rendering advanced features (all deferred by directive scopes)
