@@ -40,10 +40,15 @@
 None
 
 ## Tests Executed
-- `tests/test_launch.py` executed successfully.
+- `tests.test_launch` executed successfully using `.venv` Python with `QT_QPA_PLATFORM=offscreen`.
+
+## Launch Proof
+- Proof artifact recorded at `artifacts/run_01_launch.txt`.
+- Test command: `.venv\Scripts\python.exe -m unittest tests.test_launch -v` executed successfully.
 
 ## Manual Smoke Validations Performed
-- Application launched successfully via `scripts/launch.bat`.
+- Launch module path validated (`scripts\launch.bat` is wired to `.venv\Scripts\python.exe -m ui.app`).
+- Bootstrap window construction and title verified through `tests.test_launch.py`.
 - Verified layout (Menu Bar, Tools dock on left, Board shell central, Status bar).
 
 ## Blockers Encountered
@@ -53,5 +58,5 @@ None.
 **Explicit Confirmation:** `C:\DEV\LXS` was NOT modified during this run.
 
 ## Version Control
-**Commit Hash:** 19baa70b2eda25a5d689dcf86597689686e02404
-**Push Confirmation:** SKIPPED (No remote configured)
+**Commit Hash:** 2fd094e
+**Push Confirmation:** SKIPPED (No remote configured in `C:\DEV\LXS_UI`)
