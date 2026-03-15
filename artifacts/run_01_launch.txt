@@ -22,3 +22,10 @@ Environment: QT_QPA_PLATFORM=offscreen
 Result: PASS (1 test, 0 failures, 0 errors)
 Note: launch path validated via headless test harness; scripts\launch.bat invokes .venv runtime and app entrypoint is exercised by test launch module.
 
+
+---
+Recorded at: 2026-03-15 18:02:27 -05:00
+Command: ./.venv/Scripts/python.exe -m unittest tests.test_launch -v
+Environment: QT_QPA_PLATFORM=offscreen
+Result: PASS (Ran 1 test, 0 failures, 0 errors)
+Artifact refreshed: .
