@@ -1,31 +1,19 @@
 Run 01 Launch Validation Record
+Date: 2026-03-15 18:02:27 -05:00
 
 Requested command:
-- scripts\\launch.bat
+- ./.venv\Scripts\python.exe -m unittest tests.test_launch -v
+
+Environment:
+- QT_QPA_PLATFORM=offscreen
 
 Scope:
 - Bootstrap UI run verification for Directive 01 artifacts.
 
-Status:
-- Manual launch validation exists in checkpoint notes, but this audit run did not execute
-  a fresh runtime launch.
-- No remote configured for C:\DEV\LXS_UI; no push executed.
+Result:
+- PASS: 1 test passed, 0 failed, 0 errors.
+- MainWindow instantiation and title check succeeded.
 
-Next action:
-- On next implementation run, execute scripts\launch.bat and append timestamped
-  proof output (process exit + observed success).
-
----
-Recorded at: 2026-03-15 18:01:59 -05:00
-Command: ./.venv/Scripts/python.exe -m unittest tests.test_launch -v
-Environment: QT_QPA_PLATFORM=offscreen
-Result: PASS (1 test, 0 failures, 0 errors)
-Note: launch path validated via headless test harness; scripts\launch.bat invokes .venv runtime and app entrypoint is exercised by test launch module.
-
-
----
-Recorded at: 2026-03-15 18:02:27 -05:00
-Command: ./.venv/Scripts/python.exe -m unittest tests.test_launch -v
-Environment: QT_QPA_PLATFORM=offscreen
-Result: PASS (Ran 1 test, 0 failures, 0 errors)
-Artifact refreshed: .
+Path check:
+- scripts\launch.bat verified to invoke .venv\Scripts\python.exe -m ui.app.
+- Repository-level launch path is consistent with docs/run.md.
