@@ -1,14 +1,14 @@
 # UI Phase Status
 
 **Current Phase Name:** Python Workbench v0  
-**Latest Completed Run:** Run 01  
+**Latest Completed Run:** Run 02  
 
 ## Run Completion Table
 
 | Run | Status | Description |
 |-----|--------|-------------|
 | 01  | [x]    | Bootstrap UI repo shell |
-| 02  | [ ]    | Add editor model and primitive registry |
+| 02  | [x]    | Add editor model and primitive registry |
 | 03  | [ ]    | Add camera and platform rendering |
 | 04  | [ ]    | Add component placement, drag, and rendering |
 | 05  | [ ]    | Add trace and node semantics |
@@ -21,5 +21,5 @@
 ## Run Details
 
 - **Current Repo Launch Command:** `scripts\launch.bat`
-- **Current Known Blockers:** No git remote configured in `C:\DEV\LXS_UI` (push requirement pending).
+- **Current Known Blockers:** None.
 - **Current Deferred Items:** Board logic, engine bridge, rendering advanced features (all deferred by directive scopes)
