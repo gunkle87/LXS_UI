@@ -1,0 +1,7 @@
+Run: 06
+Command: C:\DEV\LXS_UI\.venv\Scripts\python.exe - offscreen render/controller smoke for MainWindow trace and node interactions
+Environment:
+- PYTHONPATH=C:\DEV\LXS_UI
+- QT_QPA_PLATFORM=offscreen
+Success Marker: RUN_06_RENDER_SMOKE_PASS
+Result: PASS

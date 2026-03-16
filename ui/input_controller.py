@@ -18,6 +18,7 @@ class InputController:
         self.board_view.input_controller = self
         
         self.dragging_component_id = None
+        self.dragging_node_id = None
         self.drag_start_pos = None
         self.drag_start_comp_pos = None
 
@@ -46,43 +47,48 @@ class InputController:
                     y=grid_y
                 )
                 self.board_state.add_component(comp)
-                self.selection_state.selected_component_ids = [comp_id]
-                self.selection_state.selected_trace_ids = []
-                self.selection_state.selected_node_ids = []
+                self.selection_state.select_component(comp_id)
                 self.board_view.update()
             
             elif self.tool_state.active_tool_id == "trace":
                 endpoint = self._get_terminal_endpoint_at(scene_x, scene_y)
                 trace = self.trace_tool.click_endpoint(endpoint)
                 if trace is not None:
-                    self.selection_state.selected_component_ids = []
-                    self.selection_state.selected_trace_ids = [trace.id]
-                    self.selection_state.selected_node_ids = []
+                    self.selection_state.select_trace(trace.id)
                 self.board_view.update()
             
             elif self.tool_state.active_tool_id == "select":
-                # Select component under cursor
-                clicked_comp_id = self._get_component_at(grid_x, grid_y)
-                if clicked_comp_id:
-                    self.selection_state.selected_component_ids = [clicked_comp_id]
-                    self.selection_state.selected_trace_ids = []
-                    self.selection_state.selected_node_ids = []
-                    self.dragging_component_id = clicked_comp_id
-                    self.drag_start_pos = QPointF(grid_x, grid_y)
-                    comp = self.board_state.components[clicked_comp_id]
-                    self.drag_start_comp_pos = QPointF(comp.x, comp.y)
+                clicked_node_id = self.board_state.get_node_at(scene_x, scene_y)
+                if clicked_node_id:
+                    self.selection_state.select_node(clicked_node_id)
+                    self.dragging_node_id = clicked_node_id
+                    self.drag_start_pos = QPointF(scene_x, scene_y)
                 else:
-                    clicked_trace_id = self.board_state.get_trace_at(scene_x, scene_y)
-                    self.selection_state.selected_component_ids = []
-                    self.selection_state.selected_node_ids = []
+                    clicked_trace_id = self._get_trace_at(scene_x, scene_y)
                     if clicked_trace_id is not None:
-                        self.selection_state.selected_trace_ids = [clicked_trace_id]
+                        self.selection_state.select_trace(clicked_trace_id)
                     else:
-                        self.selection_state.selected_trace_ids = []
+                        clicked_comp_id = self._get_component_at(grid_x, grid_y)
+                        if clicked_comp_id:
+                            self.selection_state.select_component(clicked_comp_id)
+                            self.dragging_component_id = clicked_comp_id
+                            self.drag_start_pos = QPointF(grid_x, grid_y)
+                            comp = self.board_state.components[clicked_comp_id]
+                            self.drag_start_comp_pos = QPointF(comp.x, comp.y)
+                        else:
+                            self.selection_state.clear()
+                            self.trace_tool.preview_trace = None
                 self.board_view.update()
 
     def handle_mouse_move(self, event):
-        if self.dragging_component_id:
+        if self.dragging_node_id:
+            scene_x, scene_y, _, _ = self._event_positions(event)
+            node = self.board_state.nodes[self.dragging_node_id]
+            node.x = self._snap_trace_coordinate(scene_x)
+            node.y = self._snap_trace_coordinate(scene_y)
+            self.trace_tool.reroute_connected_node(node.id)
+            self.board_view.update()
+        elif self.dragging_component_id:
             _, _, grid_x, grid_y = self._event_positions(event)
             
             dx = grid_x - self.drag_start_pos.x()
@@ -102,6 +108,7 @@ class InputController:
     def handle_mouse_release(self, event):
         if event.button() == Qt.LeftButton:
             self.dragging_component_id = None
+            self.dragging_node_id = None
 
     def handle_key_press(self, event):
         if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
@@ -121,9 +128,7 @@ class InputController:
             for node_id in self.selection_state.selected_node_ids:
                 if node_id in self.board_state.nodes:
                     del self.board_state.nodes[node_id]
-            self.selection_state.selected_component_ids = []
-            self.selection_state.selected_trace_ids = []
-            self.selection_state.selected_node_ids = []
+            self.selection_state.clear()
             self.board_view.update()
 
     def _get_component_at(self, x, y):
@@ -134,6 +139,20 @@ class InputController:
                 bounds = comp.get_bounds(prim)
                 if bounds.x <= x < bounds.x + bounds.width and bounds.y <= y < bounds.y + bounds.height:
                     return comp_id
+        return None
+
+    def _get_trace_at(self, scene_x, scene_y):
+        selected_trace_ids = list(self.selection_state.selected_trace_ids)
+        ordered_trace_ids = list(reversed(selected_trace_ids))
+        ordered_trace_ids.extend(
+            trace_id
+            for trace_id in reversed(self.board_state.traces.keys())
+            if trace_id not in selected_trace_ids
+        )
+        for trace_id in ordered_trace_ids:
+            trace = self.board_state.traces.get(trace_id)
+            if trace is not None and self.board_state.trace_contains_point(trace, scene_x, scene_y):
+                return trace_id
         return None
 
     def _get_terminal_endpoint_at(self, scene_x, scene_y, tolerance=0.35):
@@ -160,6 +179,10 @@ class InputController:
         if position is None:
             return False
         return abs(scene_x - position[0]) <= tolerance and abs(scene_y - position[1]) <= tolerance
+
+    @staticmethod
+    def _snap_trace_coordinate(value):
+        return round(value * 4.0) / 4.0
 
     def _event_positions(self, event):
         scene_pos = self.board_view.camera.view_to_scene(event.position())

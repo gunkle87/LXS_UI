@@ -103,5 +103,45 @@ class TraceTool:
 
     def reroute_connected_component(self, component_id: str) -> None:
         for trace_id in self.board_state.iter_connected_trace_ids_for_component(component_id):
-            trace = self.board_state.traces[trace_id]
-            trace.vertices = self.autoroute(trace.source, trace.target)
+            self.reroute_trace(trace_id)
+
+    def reroute_connected_node(self, node_id: str) -> None:
+        for trace_id in self.board_state.iter_connected_trace_ids_for_node(node_id):
+            self.reroute_trace(trace_id)
+
+    def reroute_trace(self, trace_id: str) -> None:
+        trace = self.board_state.traces.get(trace_id)
+        if trace is None:
+            return
+
+        trace.vertices = self._autoroute_trace(trace)
+
+    def _autoroute_trace(self, trace: TraceInstance) -> list[TraceVertex]:
+        start_pos = self.board_state.get_endpoint_position(trace.source, self.registry)
+        end_pos = self.board_state.get_endpoint_position(trace.target, self.registry)
+        if start_pos is None or end_pos is None:
+            return []
+
+        via_points = [
+            (node.x, node.y)
+            for node in self.board_state.get_owner_nodes_for_trace(trace.id)
+        ]
+
+        positions = [start_pos, *via_points, end_pos]
+        vertices: list[TraceVertex] = []
+        for index in range(len(positions) - 1):
+            segment_vertices = self._autoroute_points(positions[index], positions[index + 1])
+            if index > 0 and segment_vertices:
+                segment_vertices = segment_vertices[1:]
+            vertices.extend(segment_vertices)
+        return vertices
+
+    @staticmethod
+    def _autoroute_points(start_pos: tuple[float, float], end_pos: tuple[float, float]) -> list[TraceVertex]:
+        start_vertex = TraceVertex(*start_pos)
+        end_vertex = TraceVertex(*end_pos)
+        if start_vertex.x == end_vertex.x or start_vertex.y == end_vertex.y:
+            return [start_vertex, end_vertex]
+
+        bend_vertex = TraceVertex(end_vertex.x, start_vertex.y)
+        return [start_vertex, bend_vertex, end_vertex]

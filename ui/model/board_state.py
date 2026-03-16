@@ -66,6 +66,12 @@ class BoardState:
                 return trace_id
         return None
 
+    def get_node_at(self, x: float, y: float, tolerance: float = 0.30) -> Optional[str]:
+        for node_id, node in reversed(self.nodes.items()):
+            if abs(node.x - x) <= tolerance and abs(node.y - y) <= tolerance:
+                return node_id
+        return None
+
     def iter_connected_trace_ids_for_component(self, component_id: str):
         for trace_id, trace in self.traces.items():
             endpoints = (trace.source, trace.target)
@@ -74,6 +80,33 @@ class BoardState:
                 for endpoint in endpoints
             ):
                 yield trace_id
+
+    def iter_connected_trace_ids_for_node(self, node_id: str):
+        node = self.nodes.get(node_id)
+        if node is None:
+            return
+
+        yielded_trace_ids = set()
+
+        owner_trace_id = node.owner_trace_id
+        if owner_trace_id in self.traces:
+            yielded_trace_ids.add(owner_trace_id)
+            yield owner_trace_id
+
+        for trace_id, trace in self.traces.items():
+            if trace_id in yielded_trace_ids:
+                continue
+            endpoints = (trace.source, trace.target)
+            if any(endpoint.node_id == node_id for endpoint in endpoints):
+                yielded_trace_ids.add(trace_id)
+                yield trace_id
+
+    def get_owner_nodes_for_trace(self, trace_id: str):
+        return [
+            node
+            for node in self.nodes.values()
+            if node.owner_trace_id == trace_id
+        ]
 
     def traces_share_semantic_connection(self, left_trace_id: str, right_trace_id: str) -> bool:
         left_trace = self.traces.get(left_trace_id)

@@ -43,8 +43,11 @@ class BoardView(QWidget):
     def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
         view_rect = QRectF(self.rect())
+        preview_trace = None
+        if self.input_controller is not None:
+            preview_trace = self.input_controller.trace_tool.preview_trace
         self.renderer.render(painter, self.camera, view_rect, self.platform_bounds,
-                             self.board_state, self.selection_state, self.registry)
+                             self.board_state, self.selection_state, self.registry, preview_trace)
 
     def wheelEvent(self, event: QWheelEvent):
         """Handle stepped zoom via mouse wheel."""

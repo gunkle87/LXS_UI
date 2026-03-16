@@ -1,6 +1,8 @@
 from PySide6.QtGui import QPainter, QColor, QPen, QBrush
 from PySide6.QtCore import QRectF, QPointF, Qt
 from ui.model.geometry import GridBounds
+from ui.render.node_renderer import draw_nodes
+from ui.render.trace_renderer import draw_traces
 from ui.render.theme import default_theme
 from ui.camera import Camera
 
@@ -184,7 +186,7 @@ class BoardRenderer:
         painter.drawRect(inset_rect)
         
     def render(self, painter: QPainter, camera: Camera, view_rect: QRectF, platform_bounds: GridBounds,
-               board_state=None, selection_state=None, registry=None):
+               board_state=None, selection_state=None, registry=None, preview_trace=None):
         """Render the board view."""
         # 1. Background
         painter.fillRect(view_rect, QColor(self.theme.background_color))
@@ -196,6 +198,14 @@ class BoardRenderer:
         painter.setRenderHint(QPainter.Antialiasing, False) # Keep procedural/stepped style
         self._draw_platform(painter, camera, platform_bounds)
 
-        # 4. Components
+        # 4. Traces
+        if board_state and selection_state:
+            draw_traces(painter, camera, self.theme, board_state, selection_state, preview_trace)
+
+        # 5. Nodes
+        if board_state and selection_state:
+            draw_nodes(painter, camera, self.theme, board_state, selection_state)
+
+        # 6. Components
         if board_state and registry:
             self._draw_components(painter, camera, board_state, selection_state, registry)
