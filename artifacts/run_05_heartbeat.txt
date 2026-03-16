@@ -1,0 +1,3 @@
+2026-03-16T04:22:52Z | files=ui/model/trace_instance.py,ui/model/node_instance.py,ui/model/board_state.py,ui/tools/trace_tool.py,ui/input_controller.py,ui/widgets/inspector_panel.py,tests/test_routing_semantics.py | action=run 05 recovery implementation start | status=in-progress | next=run routing tests
+2026-03-16T04:23:54Z | files=docs/checkpoints/RUN_05.md,docs/UI_PHASE_STATUS.md | action=canonical docs restored and ready for validation sweep | status=in-progress | next=run full pytest and trace smoke
+2026-03-16T04:24:11Z | files=artifacts/run_05_launch.txt,docs/checkpoints/RUN_05.md,docs/UI_PHASE_STATUS.md | action=run 05 validation complete | status=done | next=commit and push

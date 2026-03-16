@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 from ui.widgets.primitive_dropdown import PrimitiveDropdown
 
 class InspectorPanel(QWidget):
@@ -8,6 +8,10 @@ class InspectorPanel(QWidget):
         self.layout = QVBoxLayout()
         label = QLabel("Inspector / Tools / Components")
         self.layout.addWidget(label)
+        self.select_button = QPushButton("Select")
+        self.trace_button = QPushButton("Trace")
+        self.layout.addWidget(self.select_button)
+        self.layout.addWidget(self.trace_button)
         self.layout.addStretch()
         self.setLayout(self.layout)
 
@@ -15,8 +19,10 @@ class InspectorPanel(QWidget):
         self.tool_state = tool_state
         self.primitive_dropdown = PrimitiveDropdown(registry, self)
         self.primitive_dropdown.currentIndexChanged.connect(self._on_primitive_selected)
+        self.select_button.clicked.connect(self._activate_select_tool)
+        self.trace_button.clicked.connect(self._activate_trace_tool)
         # Insert it before the stretch
-        self.layout.insertWidget(1, self.primitive_dropdown)
+        self.layout.insertWidget(3, self.primitive_dropdown)
 
     def _on_primitive_selected(self, index):
         type_id = self.primitive_dropdown.currentData()
@@ -24,5 +30,12 @@ class InspectorPanel(QWidget):
             self.tool_state.active_tool_id = "place"
             self.tool_state.selected_primitive_id = type_id
         else:
-            self.tool_state.active_tool_id = "select"
-            self.tool_state.selected_primitive_id = None
+            self._activate_select_tool()
+
+    def _activate_select_tool(self):
+        self.tool_state.active_tool_id = "select"
+        self.tool_state.selected_primitive_id = None
+
+    def _activate_trace_tool(self):
+        self.tool_state.active_tool_id = "trace"
+        self.tool_state.selected_primitive_id = None

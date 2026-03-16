@@ -1,0 +1,4 @@
+Run: 05
+Command: C:\DEV\LXS_UI\.venv\Scripts\python.exe - controller trace workflow smoke
+Success Marker: RUN_05_TRACE_WORKFLOW_PASS
+Result: PASS
