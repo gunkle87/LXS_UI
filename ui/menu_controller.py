@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QFileDialog
 class MenuController:
     """Wire program and edit menu actions to the current board session."""
 
-    def __init__(self, window, input_controller, board_state, selection_state, tool_state, command_stack, project_io):
+    def __init__(self, window, input_controller, board_state, selection_state, tool_state, command_stack, project_io, ui_callback=None):
         self.window = window
         self.input_controller = input_controller
         self.board_state = board_state
@@ -14,6 +14,7 @@ class MenuController:
         self.tool_state = tool_state
         self.command_stack = command_stack
         self.project_io = project_io
+        self.ui_callback = ui_callback
         self.current_project_path = None
 
     def wire_actions(self, menu_bar):
@@ -82,6 +83,8 @@ class MenuController:
         self.selection_state.clear()
         self.input_controller.cancel_transient_state()
         self.window.board_view.update()
+        if self.ui_callback is not None:
+            self.ui_callback(board_changed=True, selection_changed=True)
         recorded = self.command_stack.record_transition(
             label=label,
             before_board=before_board,

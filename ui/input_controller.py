@@ -10,7 +10,7 @@ from ui.tools.trace_tool import TraceTool
 
 class InputController:
     """Canonical input controller shell for the LXS UI."""
-    def __init__(self, board_view, board_state, selection_state, tool_state, registry, command_stack=None, clipboard=None):
+    def __init__(self, board_view, board_state, selection_state, tool_state, registry, command_stack=None, clipboard=None, ui_callback=None):
         self.board_view = board_view
         self.board_state = board_state
         self.selection_state = selection_state
@@ -18,6 +18,7 @@ class InputController:
         self.registry = registry
         self.command_stack = command_stack
         self.clipboard = clipboard
+        self.ui_callback = ui_callback
         self.trace_tool = TraceTool(board_state, registry)
         
         self.board_view.input_controller = self
@@ -37,7 +38,7 @@ class InputController:
                 self.selection_state.selected_component_ids = []
                 self.selection_state.selected_trace_ids = []
                 self.selection_state.selected_node_ids = [node.id]
-                self.board_view.update()
+                self._notify_ui(board_changed=True, selection_changed=True)
             return
 
         if event.button() == Qt.LeftButton:
@@ -53,14 +54,16 @@ class InputController:
                 )
                 self.board_state.add_component(comp)
                 self.selection_state.select_component(comp_id)
-                self.board_view.update()
+                self._notify_ui(board_changed=True, selection_changed=True)
             
             elif self.tool_state.active_tool_id == "trace":
                 endpoint = self._get_terminal_endpoint_at(scene_x, scene_y)
                 trace = self.trace_tool.click_endpoint(endpoint)
                 if trace is not None:
                     self.selection_state.select_trace(trace.id)
-                self.board_view.update()
+                    self._notify_ui(board_changed=True, selection_changed=True)
+                else:
+                    self._notify_ui(board_changed=False, selection_changed=False)
             
             elif self.tool_state.active_tool_id == "select":
                 clicked_node_id = self.board_state.get_node_at(scene_x, scene_y)
@@ -83,7 +86,7 @@ class InputController:
                         else:
                             self.selection_state.clear()
                             self.trace_tool.preview_trace = None
-                self.board_view.update()
+                self._notify_ui(board_changed=False, selection_changed=True)
 
     def handle_mouse_move(self, event):
         if self.dragging_node_id:
@@ -92,7 +95,7 @@ class InputController:
             node.x = self._snap_trace_coordinate(scene_x)
             node.y = self._snap_trace_coordinate(scene_y)
             self.trace_tool.reroute_connected_node(node.id)
-            self.board_view.update()
+            self._notify_ui(board_changed=True, selection_changed=False)
         elif self.dragging_component_id:
             _, _, grid_x, grid_y = self._event_positions(event)
             
@@ -103,12 +106,12 @@ class InputController:
             comp.x = int(self.drag_start_comp_pos.x() + dx)
             comp.y = int(self.drag_start_comp_pos.y() + dy)
             self.trace_tool.reroute_connected_component(comp.id)
-            self.board_view.update()
+            self._notify_ui(board_changed=True, selection_changed=False)
         elif self.tool_state.active_tool_id == "trace" and self.trace_tool.start_endpoint is not None:
             scene_x, scene_y, _, _ = self._event_positions(event)
             endpoint = self._get_terminal_endpoint_at(scene_x, scene_y)
             self.trace_tool.update_preview(endpoint)
-            self.board_view.update()
+            self._notify_ui(board_changed=False, selection_changed=False)
 
     def handle_mouse_release(self, event):
         if event.button() == Qt.LeftButton:
@@ -177,7 +180,7 @@ class InputController:
         self.selection_state.clear()
         self.cancel_transient_state()
         self._record_history("Delete", before_board, before_selection)
-        self.board_view.update()
+        self._notify_ui(board_changed=True, selection_changed=True)
         return True
 
     def undo(self):
@@ -186,7 +189,7 @@ class InputController:
         restored = self.command_stack.undo(self.board_state, self.selection_state)
         if restored:
             self.cancel_transient_state()
-            self.board_view.update()
+            self._notify_ui(board_changed=True, selection_changed=True)
         return restored
 
     def redo(self):
@@ -195,7 +198,7 @@ class InputController:
         restored = self.command_stack.redo(self.board_state, self.selection_state)
         if restored:
             self.cancel_transient_state()
-            self.board_view.update()
+            self._notify_ui(board_changed=True, selection_changed=True)
         return restored
 
     def cancel_transient_state(self):
@@ -396,3 +399,8 @@ class InputController:
         ]
         for node_id in node_ids:
             del self.board_state.nodes[node_id]
+
+    def _notify_ui(self, board_changed: bool, selection_changed: bool):
+        self.board_view.update()
+        if self.ui_callback is not None:
+            self.ui_callback(board_changed=board_changed, selection_changed=selection_changed)

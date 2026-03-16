@@ -1,0 +1,7 @@
+Run: 09
+Command: C:\DEV\LXS_UI\.venv\Scripts\python.exe - offscreen simulation state and inspector smoke using MainWindow
+Environment:
+- PYTHONPATH=C:\DEV\LXS_UI
+- QT_QPA_PLATFORM=offscreen
+Success Marker: RUN_09_STATE_PRESENTATION_SMOKE_PASS
+Result: PASS

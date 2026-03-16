@@ -145,6 +145,56 @@ class BoardRenderer:
                 painter.drawEllipse(QPointF(comp_rect.right(), pt_view.y()), pad_radius, pad_radius)
 
 
+    def _draw_component_states(self, painter: QPainter, camera: Camera, board_state, registry, simulation_snapshot):
+        if simulation_snapshot is None:
+            return
+
+        gs = self.theme.grid_size
+        for comp_id, comp in board_state.components.items():
+            prim = registry.get_primitive(comp.type_id)
+            if prim is None:
+                continue
+
+            component_state = simulation_snapshot.component_states.get(comp_id)
+            bounds = comp.get_bounds(prim)
+            scene_left = bounds.x * gs
+            scene_top = bounds.y * gs
+            scene_width = bounds.width * gs
+            scene_height = bounds.height * gs
+            rect_scene = QRectF(scene_left, scene_top, scene_width, scene_height)
+            tl_view = camera.scene_to_view(rect_scene.topLeft())
+            br_view = camera.scene_to_view(rect_scene.bottomRight())
+            view_rect = QRectF(tl_view, br_view)
+
+            accent_color = self._logic_color(component_state)
+            painter.setPen(QPen(accent_color, max(1.0, 2.0 * camera.zoom)))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRect(view_rect.adjusted(1, 1, -1, -1))
+
+            input_pad_x = view_rect.left()
+            output_pad_x = view_rect.right()
+            pad_radius = max(2.5, 3.4 * camera.zoom)
+
+            from ui.model.geometry import get_lane_y_offset
+
+            for index in range(prim.num_inputs):
+                state = simulation_snapshot.terminal_states.get((comp_id, True, index))
+                y_offset_cells = get_lane_y_offset(index, prim.num_inputs, bounds.height)
+                cy_scene = scene_top + (y_offset_cells * gs)
+                pt_view = camera.scene_to_view(QPointF(scene_left, cy_scene))
+                painter.setPen(QPen(QColor(self.theme.state_active_outline), 1.0))
+                painter.setBrush(QBrush(self._logic_color(state)))
+                painter.drawEllipse(QPointF(input_pad_x, pt_view.y()), pad_radius, pad_radius)
+
+            output_state = simulation_snapshot.terminal_states.get((comp_id, False, 0), component_state)
+            for index in range(prim.num_outputs):
+                y_offset_cells = get_lane_y_offset(index, prim.num_outputs, bounds.height)
+                cy_scene = scene_top + (y_offset_cells * gs)
+                pt_view = camera.scene_to_view(QPointF(scene_left + scene_width, cy_scene))
+                painter.setPen(QPen(QColor(self.theme.state_active_outline), 1.0))
+                painter.setBrush(QBrush(self._logic_color(output_state)))
+                painter.drawEllipse(QPointF(output_pad_x, pt_view.y()), pad_radius, pad_radius)
+
     def _draw_platform(self, painter: QPainter, camera: Camera, bounds: GridBounds):
         """Draw the bounded platform plate, edge, and gasket."""
         if bounds.width == 0 or bounds.height == 0:
@@ -186,7 +236,7 @@ class BoardRenderer:
         painter.drawRect(inset_rect)
         
     def render(self, painter: QPainter, camera: Camera, view_rect: QRectF, platform_bounds: GridBounds,
-               board_state=None, selection_state=None, registry=None, preview_trace=None):
+               board_state=None, selection_state=None, registry=None, preview_trace=None, simulation_snapshot=None):
         """Render the board view."""
         # 1. Background
         painter.fillRect(view_rect, QColor(self.theme.background_color))
@@ -209,3 +259,11 @@ class BoardRenderer:
         # 6. Components
         if board_state and registry:
             self._draw_components(painter, camera, board_state, selection_state, registry)
+            self._draw_component_states(painter, camera, board_state, registry, simulation_snapshot)
+
+    def _logic_color(self, logic_state):
+        if logic_state is None:
+            return QColor(self.theme.state_unknown_color)
+        if not logic_state.known:
+            return QColor(self.theme.state_unknown_color)
+        return QColor(self.theme.state_true_color if logic_state.value else self.theme.state_false_color)

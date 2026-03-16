@@ -36,5 +36,9 @@ class Theme:
     trace_inner_width: float = 2.2
     trace_selected_outer_width: float = 5.0
     trace_selected_inner_width: float = 3.0
+    state_true_color: str = "#58C26D"
+    state_false_color: str = "#C64F4F"
+    state_unknown_color: str = "#9099A3"
+    state_active_outline: str = "#E8F3FF"
 
 default_theme = Theme()

@@ -29,11 +29,13 @@ class BoardView(QWidget):
         self.board_state = None
         self.selection_state = None
         self.registry = None
+        self.simulation_snapshot = None
 
-    def set_models(self, board_state, selection_state, registry):
+    def set_models(self, board_state, selection_state, registry, simulation_snapshot=None):
         self.board_state = board_state
         self.selection_state = selection_state
         self.registry = registry
+        self.simulation_snapshot = simulation_snapshot
 
     def update_platform_bounds(self, new_bounds: GridBounds):
         """Update platform boundaries and trigger repaint."""
@@ -47,7 +49,7 @@ class BoardView(QWidget):
         if self.input_controller is not None:
             preview_trace = self.input_controller.trace_tool.preview_trace
         self.renderer.render(painter, self.camera, view_rect, self.platform_bounds,
-                             self.board_state, self.selection_state, self.registry, preview_trace)
+                             self.board_state, self.selection_state, self.registry, preview_trace, self.simulation_snapshot)
 
     def wheelEvent(self, event: QWheelEvent):
         """Handle stepped zoom via mouse wheel."""
