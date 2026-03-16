@@ -6,10 +6,22 @@ from ui.widgets.status_bar import AppStatusBar
 from ui.board_view import BoardView
 from ui.widgets.inspector_panel import InspectorPanel
 
+from ui.services.primitive_registry import PrimitiveRegistry
+from ui.model.board_state import BoardState
+from ui.model.selection_state import SelectionState
+from ui.model.tool_state import ToolState
+from ui.input_controller import InputController
+
 class MainWindow(QMainWindow):
     """Canonical main window for the LXS UI."""
     def __init__(self):
         super().__init__()
+        
+        # Core Models & Services
+        self.registry = PrimitiveRegistry()
+        self.board_state = BoardState()
+        self.selection_state = SelectionState()
+        self.tool_state = ToolState()
         
         self.setWindowTitle("LXS UI Workbench")
         self.resize(1024, 768)
@@ -20,11 +32,15 @@ class MainWindow(QMainWindow):
         
         # 2. Central board viewport shell
         self.board_view = BoardView(self)
+        self.board_view.set_models(self.board_state, self.selection_state, self.registry)
         self.setCentralWidget(self.board_view)
+        
+        self.input_controller = InputController(self.board_view, self.board_state, self.selection_state, self.tool_state, self.registry)
         
         # 3. Left-side placeholder tool/component area
         self.inspector_dock = QDockWidget("Tools", self)
         self.inspector_panel = InspectorPanel(self.inspector_dock)
+        self.inspector_panel.set_registry(self.registry, self.tool_state)
         self.inspector_dock.setWidget(self.inspector_panel)
         self.inspector_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.inspector_dock)

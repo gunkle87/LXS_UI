@@ -24,6 +24,16 @@ class BoardView(QWidget):
         # Panning state
         self._is_panning = False
         self._last_mouse_pos = QPointF()
+        
+        self.input_controller = None
+        self.board_state = None
+        self.selection_state = None
+        self.registry = None
+
+    def set_models(self, board_state, selection_state, registry):
+        self.board_state = board_state
+        self.selection_state = selection_state
+        self.registry = registry
 
     def update_platform_bounds(self, new_bounds: GridBounds):
         """Update platform boundaries and trigger repaint."""
@@ -33,7 +43,8 @@ class BoardView(QWidget):
     def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
         view_rect = QRectF(self.rect())
-        self.renderer.render(painter, self.camera, view_rect, self.platform_bounds)
+        self.renderer.render(painter, self.camera, view_rect, self.platform_bounds,
+                             self.board_state, self.selection_state, self.registry)
 
     def wheelEvent(self, event: QWheelEvent):
         """Handle stepped zoom via mouse wheel."""
@@ -48,6 +59,8 @@ class BoardView(QWidget):
         if event.button() == Qt.MiddleButton:
             self._is_panning = True
             self._last_mouse_pos = event.position()
+        elif self.input_controller:
+            self.input_controller.handle_mouse_press(event)
         else:
             super().mousePressEvent(event)
 
@@ -58,6 +71,8 @@ class BoardView(QWidget):
             self.camera.pan(delta.x(), delta.y())
             self._last_mouse_pos = event.position()
             self.update()
+        elif self.input_controller:
+            self.input_controller.handle_mouse_move(event)
         else:
             super().mouseMoveEvent(event)
 
@@ -65,5 +80,13 @@ class BoardView(QWidget):
         """End pan on middle mouse release."""
         if event.button() == Qt.MiddleButton:
             self._is_panning = False
+        elif self.input_controller:
+            self.input_controller.handle_mouse_release(event)
         else:
             super().mouseReleaseEvent(event)
+
+    def keyPressEvent(self, event):
+        if self.input_controller:
+            self.input_controller.handle_key_press(event)
+        else:
+            super().keyPressEvent(event)

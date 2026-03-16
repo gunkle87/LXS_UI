@@ -1,0 +1,7 @@
+Run: 04
+Command: C:\DEV\LXS_UI\.venv\Scripts\python.exe - offscreen launch smoke for ui.main_window.MainWindow
+Environment:
+- PYTHONPATH=C:\DEV\LXS_UI
+- QT_QPA_PLATFORM=offscreen
+Success Marker: RUN_04_LAUNCH_PASS
+Result: PASS

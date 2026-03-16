@@ -1,7 +1,7 @@
 # UI Phase Status
 
 **Current Phase Name:** Python Workbench v0  
-**Latest Completed Run:** Run 03
+**Latest Completed Run:** Run 04
 
 ## Run Completion Table
 
@@ -10,7 +10,7 @@
 | 01  | [x]    | Bootstrap UI repo shell |
 | 02  | [x]    | Add editor model and primitive registry |
 | 03  | [x]    | Add camera and platform rendering |
-| 04  | [ ]    | Add component placement, drag, and rendering |
+| 04  | [x]    | Add component placement, drag, and rendering |
 | 05  | [ ]    | Add trace and node semantics |
 | 06  | [ ]    | Add trace rendering and hit testing |
 | 07  | [ ]    | Add project I/O and editing commands |
@@ -21,5 +21,5 @@
 ## Run Details
 
 - **Current Repo Launch Command:** `scripts\launch.bat`
-- **Current Known Blockers:** None.
-- **Current Deferred Items:** Board logic, engine bridge, rendering advanced features (all deferred by directive scopes)
+- **Current Known Blockers:** UI repo push remote is unresolved (`origin` currently returns repository not found on push).
+- **Current Deferred Items:** Trace semantics, project I/O, engine bridge, and advanced rendering beyond directive 04 scope
