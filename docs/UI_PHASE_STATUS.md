@@ -21,5 +21,5 @@
 ## Run Details
 
 - **Current Repo Launch Command:** `scripts\launch.bat`
-- **Current Known Blockers:** UI repo push remote is unresolved (`origin` currently returns repository not found on push).
+- **Current Known Blockers:** None.
 - **Current Deferred Items:** Trace semantics, project I/O, engine bridge, and advanced rendering beyond directive 04 scope
