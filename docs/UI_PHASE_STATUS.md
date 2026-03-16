@@ -1,7 +1,7 @@
 # UI Phase Status
 
 **Current Phase Name:** Python Workbench v0  
-**Latest Completed Run:** Run 07
+**Latest Completed Run:** Run 08
 
 ## Run Completion Table
 
@@ -14,7 +14,7 @@
 | 05  | [x]    | Add trace and node semantics |
 | 06  | [x]    | Add trace rendering and hit testing |
 | 07  | [x]    | Add project I/O and editing commands |
-| 08  | [ ]    | Add engine bridge and API integration |
+| 08  | [x]    | Add engine bridge and API integration |
 | 09  | [ ]    | Add state presentation and inspection |
 | 10  | [ ]    | Close v0 UI phase |
 
@@ -22,4 +22,4 @@
 
 - **Current Repo Launch Command:** `scripts\launch.bat`
 - **Current Known Blockers:** None.
-- **Current Deferred Items:** Engine bridge and state presentation beyond directive 07 scope
+- **Current Deferred Items:** State presentation and inspection beyond directive 08 scope

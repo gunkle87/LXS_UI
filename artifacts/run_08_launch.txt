@@ -1,0 +1,6 @@
+Run: 08
+Command: C:\DEV\LXS_UI\.venv\Scripts\python.exe - engine bridge smoke using exported UI board and lxs_api.dll
+Environment:
+- PYTHONPATH=C:\DEV\LXS_UI
+Success Marker: RUN_08_ENGINE_BRIDGE_SMOKE_PASS
+Result: PASS
