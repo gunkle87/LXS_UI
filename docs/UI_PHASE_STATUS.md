@@ -1,7 +1,7 @@
 # UI Phase Status
 
-**Current Phase Name:** Python Workbench v0  
-**Latest Completed Run:** Run 09
+**Current Phase Name:** Python Workbench v0 Closed  
+**Latest Completed Run:** Run 10
 
 ## Run Completion Table
 
@@ -16,10 +16,10 @@
 | 07  | [x]    | Add project I/O and editing commands |
 | 08  | [x]    | Add engine bridge and API integration |
 | 09  | [x]    | Add state presentation and inspection |
-| 10  | [ ]    | Close v0 UI phase |
+| 10  | [x]    | Close v0 UI phase |
 
 ## Run Details
 
 - **Current Repo Launch Command:** `scripts\launch.bat`
 - **Current Known Blockers:** None.
-- **Current Deferred Items:** Final v0 phase closeout beyond directive 09 scope
+- **Current Deferred Items:** Post-v0 enhancement work only; see `docs/UI_V0_PHASE_CLOSE.md`.

@@ -13,6 +13,7 @@ from ui.services.command_stack import CommandStack
 from ui.services.engine_bridge import EngineBridge
 from ui.services.project_io import ProjectIO
 from ui.services.simulation_controller import SimulationController
+from ui.tool_controller import ToolController
 from ui.model.board_state import BoardState
 from ui.model.selection_state import SelectionState
 from ui.model.tool_state import ToolState
@@ -28,6 +29,7 @@ class MainWindow(QMainWindow):
         self.board_state = BoardState()
         self.selection_state = SelectionState()
         self.tool_state = ToolState()
+        self.tool_controller = ToolController(self.tool_state)
         self.clipboard = Clipboard()
         self.command_stack = CommandStack()
         self.project_io = ProjectIO()
@@ -69,7 +71,7 @@ class MainWindow(QMainWindow):
         # 3. Left-side placeholder tool/component area
         self.inspector_dock = QDockWidget("Tools", self)
         self.inspector_panel = InspectorPanel(self.inspector_dock)
-        self.inspector_panel.set_registry(self.registry, self.tool_state)
+        self.inspector_panel.set_registry(self.registry, self.tool_controller)
         self.inspector_panel.set_callbacks(self.step_simulation, self.toggle_selected_input)
         self.inspector_dock.setWidget(self.inspector_panel)
         self.inspector_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)

@@ -4,7 +4,6 @@ from PySide6.QtGui import QPainter, QPaintEvent, QWheelEvent, QMouseEvent
 
 from ui.camera import Camera
 from ui.render.board_renderer import BoardRenderer
-from ui.model.platform_state import PlatformState
 from ui.model.geometry import GridBounds
 
 class BoardView(QWidget):

@@ -1,0 +1,7 @@
+Run: 10
+Command: C:\DEV\LXS_UI\.venv\Scripts\python.exe -m ui.app --smoke-test
+Environment:
+- PYTHONPATH=C:\DEV\LXS_UI
+- QT_QPA_PLATFORM=offscreen
+Success Marker: LXS_UI_APP_SMOKE_PASS
+Result: PASS

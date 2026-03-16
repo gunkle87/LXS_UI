@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 
 from ui.services.engine_bridge import EngineBridge
-from ui.services.lxs_api_wrapper import LxsApiError
 
 
 @dataclass(frozen=True)

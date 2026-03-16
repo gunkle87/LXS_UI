@@ -8,9 +8,13 @@ def main():
     
     # Initialize the main window
     window = MainWindow()
+    if "--smoke-test" in sys.argv:
+        print("LXS_UI_APP_SMOKE_PASS")
+        window.close()
+        return 0
     window.show()
     
-    sys.exit(app.exec())
+    return app.exec()
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -26,6 +26,12 @@ You can launch the application via the provided batch script:
 scripts\launch.bat
 ```
 
+This starts the v0 workbench with:
+- board editing and autorouted orthogonal traces
+- copy/paste, duplicate, undo/redo, and project save/load
+- DLL-backed engine stepping
+- simple state coloring plus inspector/status readout
+
 ## Pre-run Check (for new implementation sessions)
 
 From `C:\DEV\LXS_UI`, run:
@@ -58,3 +64,16 @@ Alternatively, from an activated environment:
 ```cmd
 python -m ui.app
 ``` 
+
+For a non-interactive launch smoke:
+```cmd
+python -m ui.app --smoke-test
+```
+
+## Quick v0 Check
+
+After launch:
+1. Place or load a small board with `input`, `and`, `output`, and `probe`.
+2. Select an input and click `Toggle Selected Input`.
+3. Click `Step`.
+4. Confirm the status bar shows updated tick/probe text and the inspector reflects the current selection.
