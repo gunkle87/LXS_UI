@@ -48,6 +48,12 @@ Before coding a run:
   - completion entry with `status=done` or blocker `status=blocked`.
 - If no heartbeat line is added for 10+ minutes, stop and write a blocker entry before continuing.
 
+You can use this helper script:
+
+```cmd
+powershell -ExecutionPolicy Bypass -File .\scripts\heartbeat.ps1 -Run 04 -Files "ui/board_view.py" -Action "start run 04" -Status in-progress -Next "implement placement"
+```
+
 Alternatively, from an activated environment:
 ```cmd
 python -m ui.app
