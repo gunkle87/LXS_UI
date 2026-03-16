@@ -37,6 +37,17 @@ powershell -ExecutionPolicy Bypass -File .\scripts\preflight.ps1
 If this preflight check fails, stop and resolve the listed blocker before
 continuing.
 
+## Anti-Stall Requirement
+
+Before coding a run:
+
+- Create or open `artifacts\run_<NN>_heartbeat.txt` (`NN` is the run number).
+- Add at least:
+  - start entry,
+  - milestone entry for each meaningful phase,
+  - completion entry with `status=done` or blocker `status=blocked`.
+- If no heartbeat line is added for 10+ minutes, stop and write a blocker entry before continuing.
+
 Alternatively, from an activated environment:
 ```cmd
 python -m ui.app
