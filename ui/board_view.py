@@ -5,6 +5,7 @@ from PySide6.QtGui import QPainter, QPaintEvent, QWheelEvent, QMouseEvent
 from ui.camera import Camera
 from ui.render.board_renderer import BoardRenderer
 from ui.model.geometry import GridBounds
+from ui.model.platform_state import DEFAULT_PLATFORM_BOUNDS
 
 class BoardView(QWidget):
     """Canonical board viewport shell."""
@@ -18,7 +19,12 @@ class BoardView(QWidget):
         
         # Base platform bounds for empty board
         # In actual use, this will be derived from placed components
-        self.platform_bounds = GridBounds(-10, -10, 10, 10)
+        self.platform_bounds = GridBounds(
+            x=DEFAULT_PLATFORM_BOUNDS.x,
+            y=DEFAULT_PLATFORM_BOUNDS.y,
+            width=DEFAULT_PLATFORM_BOUNDS.width,
+            height=DEFAULT_PLATFORM_BOUNDS.height,
+        )
         
         # Panning state
         self._is_panning = False
@@ -53,9 +59,9 @@ class BoardView(QWidget):
     def wheelEvent(self, event: QWheelEvent):
         """Handle stepped zoom via mouse wheel."""
         if event.angleDelta().y() > 0:
-            self.camera.zoom_in()
+            self.camera.zoom_in_at(event.position())
         else:
-            self.camera.zoom_out()
+            self.camera.zoom_out_at(event.position())
         self.update()
 
     def mousePressEvent(self, event: QMouseEvent):

@@ -2,7 +2,7 @@ import unittest
 from PySide6.QtCore import QPointF, QRectF
 from ui.camera import Camera
 from ui.model.geometry import GridBounds
-from ui.model.platform_state import compute_platform_bounds
+from ui.model.platform_state import DEFAULT_PLATFORM_BOUNDS, compute_platform_bounds
 from ui.model.component_instance import ComponentInstance
 
 class TestCamera(unittest.TestCase):
@@ -50,11 +50,25 @@ class TestCamera(unittest.TestCase):
         self.assertEqual(back_pt2.x(), 100.0)
         self.assertEqual(back_pt2.y(), 100.0)
 
+    def test_zoom_centered_on_view_point(self):
+        cam = Camera()
+        anchor = QPointF(120.0, 80.0)
+        expected_scene = cam.view_to_scene(anchor)
+
+        cam.zoom_in_at(anchor)
+
+        rounded_scene = cam.view_to_scene(anchor)
+        self.assertEqual(rounded_scene.x(), expected_scene.x())
+        self.assertEqual(rounded_scene.y(), expected_scene.y())
+        self.assertEqual(cam.pan_x, 120.0 - (expected_scene.x() * cam.zoom))
+        self.assertEqual(cam.pan_y, 80.0 - (expected_scene.y() * cam.zoom))
+
 class TestPlatformBounds(unittest.TestCase):
     def test_empty_components(self):
         bounds = compute_platform_bounds({}, padding_cells=4)
         self.assertTrue(bounds.width > 0)
         self.assertTrue(bounds.height > 0)
+        self.assertEqual(bounds, DEFAULT_PLATFORM_BOUNDS)
         
     def test_with_components(self):
         c1 = ComponentInstance("c1", "test_prim", 0, 0)

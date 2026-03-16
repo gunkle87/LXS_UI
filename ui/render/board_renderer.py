@@ -219,16 +219,18 @@ class BoardRenderer:
         # Platform plate
         painter.setBrush(QBrush(QColor(self.theme.platform_color)))
         
-        # Edge and gasket are procedural
         # Draw base plate (platform body + outer edge)
         edge_width = self.theme.platform_edge_width_pixels
         painter.setPen(QPen(QColor(self.theme.platform_edge_color), edge_width))
         painter.drawRect(view_rect)
         
         # Draw gasket
+        # Keep the red gasket offset by half a cell on each side so a
+        # 320x320 platform visually reports a 319x319 perimeter.
+        gasket_inset = self.theme.grid_size * 0.5
         gasket_width = self.theme.gasket_width_pixels
         inset_rect = view_rect.adjusted(
-            edge_width, edge_width, -edge_width, -edge_width
+            gasket_inset, gasket_inset, -gasket_inset, -gasket_inset
         )
         
         painter.setPen(QPen(QColor(self.theme.gasket_color), gasket_width))

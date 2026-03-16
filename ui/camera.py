@@ -23,10 +23,30 @@ class Camera:
         if self._zoom_index < len(self.ZOOM_STEPS) - 1:
             self._zoom_index += 1
         return self.zoom
+
+    def zoom_in_at(self, view_point: QPointF) -> float:
+        """Zoom in while keeping `view_point` stationary in scene coordinates."""
+        return self._zoom_at_index(self._zoom_index + 1, view_point)
         
     def zoom_out(self) -> float:
         if self._zoom_index > 0:
             self._zoom_index -= 1
+        return self.zoom
+
+    def zoom_out_at(self, view_point: QPointF) -> float:
+        """Zoom out while keeping `view_point` stationary in scene coordinates."""
+        return self._zoom_at_index(self._zoom_index - 1, view_point)
+
+    def _zoom_at_index(self, target_index: int, view_point: QPointF) -> float:
+        """Move zoom to a target index and pan so `view_point` remains fixed."""
+        target_index = max(0, min(target_index, len(self.ZOOM_STEPS) - 1))
+        if target_index == self._zoom_index:
+            return self.zoom
+
+        scene_point = self.view_to_scene(view_point)
+        self._zoom_index = target_index
+        self.pan_x = view_point.x() - (scene_point.x() * self.zoom)
+        self.pan_y = view_point.y() - (scene_point.y() * self.zoom)
         return self.zoom
         
     def pan(self, dx: float, dy: float):
