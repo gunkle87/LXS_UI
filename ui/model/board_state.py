@@ -2,10 +2,10 @@ from dataclasses import dataclass, field
 from typing import Dict, Optional
 from ui.model.component_instance import ComponentInstance
 from ui.model.geometry import get_lane_y_offset
-from ui.model.primitive_definition import PrimitiveDefinition
 from ui.model.trace_instance import TraceInstance
 from ui.model.trace_instance import TerminalRef
 from ui.model.trace_instance import TraceEndpoint
+from ui.model.trace_instance import TraceVertex
 from ui.model.node_instance import NodeInstance
 
 @dataclass
@@ -22,6 +22,86 @@ class BoardState:
         
     def add_node(self, node: NodeInstance):
         self.nodes[node.id] = node
+
+    def clear(self):
+        self.components = {}
+        self.traces = {}
+        self.nodes = {}
+
+    def snapshot(self) -> dict:
+        return {
+            "components": [
+                {
+                    "id": component.id,
+                    "type_id": component.type_id,
+                    "x": component.x,
+                    "y": component.y,
+                }
+                for component in self.components.values()
+            ],
+            "traces": [
+                {
+                    "id": trace.id,
+                    "source": self._endpoint_snapshot(trace.source),
+                    "target": self._endpoint_snapshot(trace.target),
+                    "vertices": [
+                        {"x": vertex.x, "y": vertex.y}
+                        for vertex in trace.vertices
+                    ],
+                }
+                for trace in self.traces.values()
+            ],
+            "nodes": [
+                {
+                    "id": node.id,
+                    "x": node.x,
+                    "y": node.y,
+                    "owner_trace_id": node.owner_trace_id,
+                }
+                for node in self.nodes.values()
+            ],
+        }
+
+    def restore_snapshot(self, snapshot: dict | None):
+        restored = self.from_snapshot(snapshot or {})
+        self.components = restored.components
+        self.traces = restored.traces
+        self.nodes = restored.nodes
+
+    @classmethod
+    def from_snapshot(cls, snapshot: dict):
+        board_state = cls()
+        for component_data in snapshot.get("components", []):
+            board_state.add_component(
+                ComponentInstance(
+                    id=component_data["id"],
+                    type_id=component_data["type_id"],
+                    x=int(component_data["x"]),
+                    y=int(component_data["y"]),
+                )
+            )
+        for trace_data in snapshot.get("traces", []):
+            board_state.add_trace(
+                TraceInstance(
+                    id=trace_data["id"],
+                    source=cls._endpoint_from_snapshot(trace_data["source"]),
+                    target=cls._endpoint_from_snapshot(trace_data["target"]),
+                    vertices=[
+                        TraceVertex(float(vertex["x"]), float(vertex["y"]))
+                        for vertex in trace_data.get("vertices", [])
+                    ],
+                )
+            )
+        for node_data in snapshot.get("nodes", []):
+            board_state.add_node(
+                NodeInstance(
+                    id=node_data["id"],
+                    x=float(node_data["x"]),
+                    y=float(node_data["y"]),
+                    owner_trace_id=node_data["owner_trace_id"],
+                )
+            )
+        return board_state
 
     def get_terminal_position(self, terminal: TerminalRef, registry) -> Optional[tuple[float, float]]:
         component = self.components.get(terminal.component_id)
@@ -145,3 +225,26 @@ class BoardState:
                 return False
             return min(x1, x2) - tolerance <= px <= max(x1, x2) + tolerance
         return False
+
+    @staticmethod
+    def _endpoint_snapshot(endpoint: TraceEndpoint) -> dict:
+        snapshot = {"terminal": None, "node_id": endpoint.node_id}
+        if endpoint.terminal is not None:
+            snapshot["terminal"] = {
+                "component_id": endpoint.terminal.component_id,
+                "is_input": endpoint.terminal.is_input,
+                "index": endpoint.terminal.index,
+            }
+        return snapshot
+
+    @staticmethod
+    def _endpoint_from_snapshot(snapshot: dict) -> TraceEndpoint:
+        terminal_data = snapshot.get("terminal")
+        terminal = None
+        if terminal_data is not None:
+            terminal = TerminalRef(
+                component_id=terminal_data["component_id"],
+                is_input=bool(terminal_data["is_input"]),
+                index=int(terminal_data["index"]),
+            )
+        return TraceEndpoint(terminal=terminal, node_id=snapshot.get("node_id"))

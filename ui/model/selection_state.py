@@ -25,3 +25,16 @@ class SelectionState:
         self.selected_component_ids = []
         self.selected_trace_ids = []
         self.selected_node_ids = [node_id]
+
+    def snapshot(self) -> dict:
+        return {
+            "selected_component_ids": list(self.selected_component_ids),
+            "selected_trace_ids": list(self.selected_trace_ids),
+            "selected_node_ids": list(self.selected_node_ids),
+        }
+
+    def restore_snapshot(self, snapshot: dict | None) -> None:
+        snapshot = snapshot or {}
+        self.selected_component_ids = list(snapshot.get("selected_component_ids", []))
+        self.selected_trace_ids = list(snapshot.get("selected_trace_ids", []))
+        self.selected_node_ids = list(snapshot.get("selected_node_ids", []))

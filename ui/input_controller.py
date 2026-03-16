@@ -1,18 +1,23 @@
 import uuid
 from PySide6.QtCore import Qt, QPointF
 from ui.model.component_instance import ComponentInstance
+from ui.model.node_instance import NodeInstance
 from ui.model.trace_instance import TerminalRef
 from ui.model.trace_instance import TraceEndpoint
+from ui.model.trace_instance import TraceInstance
+from ui.model.trace_instance import TraceVertex
 from ui.tools.trace_tool import TraceTool
 
 class InputController:
     """Canonical input controller shell for the LXS UI."""
-    def __init__(self, board_view, board_state, selection_state, tool_state, registry):
+    def __init__(self, board_view, board_state, selection_state, tool_state, registry, command_stack=None, clipboard=None):
         self.board_view = board_view
         self.board_state = board_state
         self.selection_state = selection_state
         self.tool_state = tool_state
         self.registry = registry
+        self.command_stack = command_stack
+        self.clipboard = clipboard
         self.trace_tool = TraceTool(board_state, registry)
         
         self.board_view.input_controller = self
@@ -112,24 +117,93 @@ class InputController:
 
     def handle_key_press(self, event):
         if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
-            for comp_id in self.selection_state.selected_component_ids:
-                if comp_id in self.board_state.components:
-                    del self.board_state.components[comp_id]
-            for trace_id in self.selection_state.selected_trace_ids:
-                if trace_id in self.board_state.traces:
-                    del self.board_state.traces[trace_id]
-                node_ids = [
-                    node_id
-                    for node_id, node in self.board_state.nodes.items()
-                    if node.owner_trace_id == trace_id
-                ]
-                for node_id in node_ids:
-                    del self.board_state.nodes[node_id]
-            for node_id in self.selection_state.selected_node_ids:
-                if node_id in self.board_state.nodes:
-                    del self.board_state.nodes[node_id]
-            self.selection_state.clear()
+            self.delete_selection()
+
+    def copy_selection(self):
+        if self.clipboard is None:
+            return False
+        payload = self._selection_payload()
+        if payload is None:
+            return False
+        self.clipboard.set_payload(payload)
+        return True
+
+    def paste_clipboard(self):
+        if self.clipboard is None:
+            return False
+        payload = self.clipboard.get_payload()
+        if payload is None:
+            return False
+        before_board, before_selection = self._capture_history()
+        if not self._paste_payload(payload):
+            return False
+        self._record_history("Paste", before_board, before_selection)
+        self.board_view.update()
+        return True
+
+    def duplicate_selection(self):
+        payload = self._selection_payload()
+        if payload is None:
+            return False
+        before_board, before_selection = self._capture_history()
+        if not self._paste_payload(payload):
+            return False
+        self._record_history("Duplicate", before_board, before_selection)
+        self.board_view.update()
+        return True
+
+    def delete_selection(self):
+        before_board, before_selection = self._capture_history()
+        changed = False
+
+        for comp_id in list(self.selection_state.selected_component_ids):
+            if comp_id in self.board_state.components:
+                self._delete_component(comp_id)
+                changed = True
+        for trace_id in list(self.selection_state.selected_trace_ids):
+            if trace_id in self.board_state.traces:
+                self._delete_trace(trace_id)
+                changed = True
+        for node_id in list(self.selection_state.selected_node_ids):
+            if node_id in self.board_state.nodes:
+                owner_trace_id = self.board_state.nodes[node_id].owner_trace_id
+                del self.board_state.nodes[node_id]
+                self.trace_tool.reroute_trace(owner_trace_id)
+                changed = True
+
+        if not changed:
+            return False
+
+        self.selection_state.clear()
+        self.cancel_transient_state()
+        self._record_history("Delete", before_board, before_selection)
+        self.board_view.update()
+        return True
+
+    def undo(self):
+        if self.command_stack is None:
+            return False
+        restored = self.command_stack.undo(self.board_state, self.selection_state)
+        if restored:
+            self.cancel_transient_state()
             self.board_view.update()
+        return restored
+
+    def redo(self):
+        if self.command_stack is None:
+            return False
+        restored = self.command_stack.redo(self.board_state, self.selection_state)
+        if restored:
+            self.cancel_transient_state()
+            self.board_view.update()
+        return restored
+
+    def cancel_transient_state(self):
+        self.trace_tool.cancel_trace()
+        self.dragging_component_id = None
+        self.dragging_node_id = None
+        self.drag_start_pos = None
+        self.drag_start_comp_pos = None
 
     def _get_component_at(self, x, y):
         # Reverse iterate to get top-most (though they shouldn't overlap)
@@ -189,3 +263,136 @@ class InputController:
         scene_x = scene_pos.x() / self.board_view.renderer.theme.grid_size
         scene_y = scene_pos.y() / self.board_view.renderer.theme.grid_size
         return scene_x, scene_y, round(scene_x), round(scene_y)
+
+    def _capture_history(self):
+        return self.board_state.snapshot(), self.selection_state.snapshot()
+
+    def _record_history(self, label, before_board, before_selection):
+        if self.command_stack is None:
+            return False
+        return self.command_stack.record_transition(
+            label=label,
+            before_board=before_board,
+            after_board=self.board_state.snapshot(),
+            before_selection=before_selection,
+            after_selection=self.selection_state.snapshot(),
+        )
+
+    def _selection_payload(self):
+        if self.selection_state.selected_component_ids:
+            component_id = self.selection_state.selected_component_ids[0]
+            component = self.board_state.components.get(component_id)
+            if component is None:
+                return None
+            return {
+                "kind": "component",
+                "component": {
+                    "id": component.id,
+                    "type_id": component.type_id,
+                    "x": component.x,
+                    "y": component.y,
+                },
+            }
+
+        if self.selection_state.selected_trace_ids:
+            trace_id = self.selection_state.selected_trace_ids[0]
+            trace = self.board_state.traces.get(trace_id)
+            if trace is None:
+                return None
+            return {
+                "kind": "trace",
+                "trace": {
+                    "id": trace.id,
+                    "source": self.board_state._endpoint_snapshot(trace.source),
+                    "target": self.board_state._endpoint_snapshot(trace.target),
+                    "vertices": [
+                        {"x": vertex.x, "y": vertex.y}
+                        for vertex in trace.vertices
+                    ],
+                },
+                "nodes": [
+                    {
+                        "id": node.id,
+                        "x": node.x,
+                        "y": node.y,
+                        "owner_trace_id": node.owner_trace_id,
+                    }
+                    for node in self.board_state.get_owner_nodes_for_trace(trace_id)
+                ],
+            }
+        return None
+
+    def _paste_payload(self, payload):
+        kind = payload.get("kind")
+        if kind == "component":
+            component_data = payload["component"]
+            new_component = ComponentInstance(
+                id=f"comp_{uuid.uuid4().hex[:8]}",
+                type_id=component_data["type_id"],
+                x=int(component_data["x"]) + 1,
+                y=int(component_data["y"]) + 1,
+            )
+            self.board_state.add_component(new_component)
+            self.selection_state.select_component(new_component.id)
+            return True
+
+        if kind == "trace":
+            trace_data = payload["trace"]
+            new_trace_id = f"trace_{len(self.board_state.traces)}"
+            node_id_map = {}
+            for node_data in payload.get("nodes", []):
+                new_node_id = f"node_{len(self.board_state.nodes) + len(node_id_map)}"
+                node_id_map[node_data["id"]] = new_node_id
+
+            def remap_endpoint(endpoint_data):
+                endpoint_snapshot = {
+                    "terminal": endpoint_data["terminal"],
+                    "node_id": endpoint_data["node_id"],
+                }
+                node_id = endpoint_snapshot["node_id"]
+                if node_id in node_id_map:
+                    endpoint_snapshot["node_id"] = node_id_map[node_id]
+                return self.board_state._endpoint_from_snapshot(endpoint_snapshot)
+
+            for node_data in payload.get("nodes", []):
+                new_node = NodeInstance(
+                    id=node_id_map[node_data["id"]],
+                    x=float(node_data["x"]) + 0.25,
+                    y=float(node_data["y"]) + 1.0,
+                    owner_trace_id=new_trace_id,
+                )
+                self.board_state.add_node(new_node)
+
+            new_trace = TraceInstance(
+                id=new_trace_id,
+                source=remap_endpoint(trace_data["source"]),
+                target=remap_endpoint(trace_data["target"]),
+                vertices=[
+                    TraceVertex(float(vertex["x"]), float(vertex["y"]))
+                    for vertex in trace_data.get("vertices", [])
+                ],
+            )
+            self.board_state.add_trace(new_trace)
+            for node in self.board_state.get_owner_nodes_for_trace(new_trace_id):
+                node.owner_trace_id = new_trace_id
+            self.trace_tool.reroute_trace(new_trace_id)
+            self.selection_state.select_trace(new_trace_id)
+            return True
+        return False
+
+    def _delete_component(self, component_id):
+        connected_trace_ids = list(self.board_state.iter_connected_trace_ids_for_component(component_id))
+        for trace_id in connected_trace_ids:
+            self._delete_trace(trace_id)
+        del self.board_state.components[component_id]
+
+    def _delete_trace(self, trace_id):
+        if trace_id in self.board_state.traces:
+            del self.board_state.traces[trace_id]
+        node_ids = [
+            node_id
+            for node_id, node in self.board_state.nodes.items()
+            if node.owner_trace_id == trace_id
+        ]
+        for node_id in node_ids:
+            del self.board_state.nodes[node_id]

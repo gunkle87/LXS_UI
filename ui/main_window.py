@@ -6,7 +6,11 @@ from ui.widgets.status_bar import AppStatusBar
 from ui.board_view import BoardView
 from ui.widgets.inspector_panel import InspectorPanel
 
+from ui.clipboard import Clipboard
+from ui.menu_controller import MenuController
 from ui.services.primitive_registry import PrimitiveRegistry
+from ui.services.command_stack import CommandStack
+from ui.services.project_io import ProjectIO
 from ui.model.board_state import BoardState
 from ui.model.selection_state import SelectionState
 from ui.model.tool_state import ToolState
@@ -22,6 +26,9 @@ class MainWindow(QMainWindow):
         self.board_state = BoardState()
         self.selection_state = SelectionState()
         self.tool_state = ToolState()
+        self.clipboard = Clipboard()
+        self.command_stack = CommandStack()
+        self.project_io = ProjectIO()
         
         self.setWindowTitle("LXS UI Workbench")
         self.resize(1024, 768)
@@ -35,7 +42,24 @@ class MainWindow(QMainWindow):
         self.board_view.set_models(self.board_state, self.selection_state, self.registry)
         self.setCentralWidget(self.board_view)
         
-        self.input_controller = InputController(self.board_view, self.board_state, self.selection_state, self.tool_state, self.registry)
+        self.input_controller = InputController(
+            self.board_view,
+            self.board_state,
+            self.selection_state,
+            self.tool_state,
+            self.registry,
+            command_stack=self.command_stack,
+            clipboard=self.clipboard,
+        )
+        self.menu_controller = MenuController(
+            self,
+            self.input_controller,
+            self.board_state,
+            self.selection_state,
+            self.tool_state,
+            self.command_stack,
+            self.project_io,
+        )
         
         # 3. Left-side placeholder tool/component area
         self.inspector_dock = QDockWidget("Tools", self)
@@ -50,4 +74,5 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.app_status_bar)
         
         # Wire actions
+        self.menu_controller.wire_actions(self.app_menu_bar)
         self.app_menu_bar.exit_action.triggered.connect(self.close)

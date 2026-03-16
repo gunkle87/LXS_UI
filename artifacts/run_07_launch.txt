@@ -1,0 +1,7 @@
+Run: 07
+Command: C:\DEV\LXS_UI\.venv\Scripts\python.exe - offscreen edit/history smoke for MainWindow menu actions
+Environment:
+- PYTHONPATH=C:\DEV\LXS_UI
+- QT_QPA_PLATFORM=offscreen
+Success Marker: RUN_07_EDIT_IO_SMOKE_PASS
+Result: PASS
